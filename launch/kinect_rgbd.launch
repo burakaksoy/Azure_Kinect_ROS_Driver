@@ -11,10 +11,10 @@
     <param name="robot_description"
       command="xacro $(find azure_kinect_ros_driver)/urdf/azure_kinect.urdf.xacro tf_prefix:=$(arg tf_prefix)" />
     <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
-      <param name="rate" value="50" />
+      <param name="rate" value="200" /> <!-- 100 Hz practical value needed -->
     </node>
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
-      <param name="publish_frequency" value="50" />
+      <param name="publish_frequency" value="200" /> <!-- 100 Hz practical value needed -->
     </node>
   </group>
 
@@ -22,11 +22,11 @@
     <param name="azure_description"
       command="xacro $(find azure_kinect_ros_driver)/urdf/azure_kinect.urdf.xacro tf_prefix:=$(arg tf_prefix)" />
     <node name="joint_state_publisher_azure" pkg="joint_state_publisher" type="joint_state_publisher">
-      <param name="rate" value="50" />
+      <param name="rate" value="200" /> <!-- 100 Hz practical value needed -->
       <remap from="robot_description" to="azure_description" />
     </node>
     <node name="robot_state_publisher_azure" pkg="robot_state_publisher" type="robot_state_publisher">
-      <param name="publish_frequency" value="50" />
+      <param name="publish_frequency" value="200" /> <!-- 100 Hz practical value needed -->
       <remap from="robot_description" to="azure_description" />
     </node>
   </group>
