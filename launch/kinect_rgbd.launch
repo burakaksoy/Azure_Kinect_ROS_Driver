@@ -122,10 +122,14 @@
       <arg name="manager"                         value="$(arg manager)" />
 
       <!-- camera names "rgb", "depth" and "ir" are hard-coded in the driver -->
-      <arg name="rgb"                             value="rgb" />
+      <!-- <arg name="rgb"                             value="rgb" />
       <arg name="ir"                              value="ir" />
       <arg name="depth"                           value="depth" />
-      <arg name="depth_registered"                value="depth_to_rgb" />
+      <arg name="depth_registered"                value="depth_to_rgb" /> -->
+      <arg name="rgb"                             value="depth" />
+      <arg name="ir"                              value="ir" />
+      <arg name="depth"                           value="rgb" />
+      <arg name="depth_registered"                value="rgb_to_depth" />
 
       <arg name="rgb_processing"                  value="$(arg rgb_processing)" />
       <arg name="debayer_processing"              value="$(arg debayer_processing)" />
