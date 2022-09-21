@@ -115,7 +115,7 @@
       <param name="subordinate_delay_off_master_usec" value="$(arg subordinate_delay_off_master_usec)"/>
       <param name="body_tracking_enabled"           type="bool"   value="$(arg body_tracking_enabled)" />
       <param name="body_tracking_smoothing_factor"  type="double" value="$(arg body_tracking_smoothing_factor)" />
-      <remap from="imu" to="$(arg tf_prefix)_kinect_imu"/>
+      <remap from="imu" to="$(arg tf_prefix)kinect_imu"/>
     </node>
 
     <!-- Load standard constellation of processing nodelets -->
