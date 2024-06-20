@@ -1510,7 +1510,7 @@ void K4AROSDevice::updateTimestampOffset(const std::chrono::microseconds& k4a_de
   if (device_to_realtime_offset_.count() == 0 ||
       std::abs((device_to_realtime_offset_ - device_to_realtime).count()) > 1e7)
   {
-    ROS_WARN_STREAM("Initializing or re-initializing the device to realtime offset: " << device_to_realtime.count()
+    ROS_WARN_STREAM_THROTTLE(10, "Initializing or re-initializing the device to realtime offset: " << device_to_realtime.count()
                                                                                       << " ns");
     device_to_realtime_offset_ = device_to_realtime;
   }
