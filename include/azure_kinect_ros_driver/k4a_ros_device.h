@@ -160,6 +160,7 @@ class K4AROSDevice
 #if defined(K4A_BODY_TRACKING)
   // Body tracker
   k4abt::tracker k4abt_tracker_;
+  k4abt::frame k4abt_body_frame_;
   std::atomic_int16_t k4abt_tracker_queue_size_;
   std::thread body_publisher_thread_;
 #endif

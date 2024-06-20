@@ -1233,10 +1233,10 @@ void K4AROSDevice::bodyPublisherThread()
   {
     if (k4abt_tracker_queue_size_ > 0)
     {
-      k4abt::frame body_frame = k4abt_tracker_.pop_result();
+      k4abt_body_frame_ = k4abt_tracker_.pop_result();
       --k4abt_tracker_queue_size_;
 
-      if (body_frame == nullptr)
+      if (k4abt_body_frame_ == nullptr)
       {
         ROS_ERROR_STREAM("Pop body frame result failed!");
         ros::shutdown();
@@ -1244,16 +1244,16 @@ void K4AROSDevice::bodyPublisherThread()
       }
       else
       {
-        auto capture_time = timestampToROS(body_frame.get_device_timestamp());
+        auto capture_time = timestampToROS(k4abt_body_frame_.get_device_timestamp());
 
         if (body_marker_publisher_.getNumSubscribers() > 0)
         {
           // Joint marker array
           MarkerArrayPtr markerArrayPtr(new MarkerArray);
-          auto num_bodies = body_frame.get_num_bodies();
+          auto num_bodies = k4abt_body_frame_.get_num_bodies();
           for (size_t i = 0; i < num_bodies; ++i)
           {
-            k4abt_body_t body = body_frame.get_body(i);
+            k4abt_body_t body = k4abt_body_frame_.get_body(i);
             for (int j = 0; j < (int) K4ABT_JOINT_COUNT; ++j)
             {
               MarkerPtr markerPtr(new Marker);
@@ -1268,7 +1268,7 @@ void K4AROSDevice::bodyPublisherThread()
         {
           // Body index map
           ImagePtr body_index_map_frame(new Image);
-          auto result = getBodyIndexMap(body_frame, body_index_map_frame);
+          auto result = getBodyIndexMap(k4abt_body_frame_, body_index_map_frame);
 
           if (result != K4A_RESULT_SUCCEEDED)
           {
