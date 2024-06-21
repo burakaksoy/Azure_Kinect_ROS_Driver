@@ -1215,7 +1215,7 @@ void K4AROSDevice::framePublisherThread()
 
     if (loop_rate.cycleTime() > loop_rate.expectedCycleTime())
     {
-      ROS_WARN_STREAM_THROTTLE(30, "Image processing thread is running behind."
+      ROS_WARN_STREAM_THROTTLE(120, "Image processing thread is running behind. (Throttling at 120 seconds)"
                                        << std::endl
                                        << "Expected max loop time: " << loop_rate.expectedCycleTime() << std::endl
                                        << "Actual loop time: " << loop_rate.cycleTime() << std::endl);
