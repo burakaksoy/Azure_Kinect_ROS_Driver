@@ -44,6 +44,7 @@ public:
   k4a::image point_cloud_image_;
   k4a::image transformed_rgb_image_;
   k4a::image transformed_depth_image_;
+  k4a::image transformed_ir_image_;
 
   std::string tf_prefix_ = "";
   std::string camera_base_frame_ = "camera_base";

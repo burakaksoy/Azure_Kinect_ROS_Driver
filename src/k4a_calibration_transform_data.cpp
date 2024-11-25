@@ -65,6 +65,10 @@ void K4ACalibrationTransformData::initialize(const K4AROSDeviceParams params)
     // Create a buffer to store depth images that are transformed into the RGB camera geometry
     transformed_depth_image_ = k4a::image::create(K4A_IMAGE_FORMAT_DEPTH16, getColorWidth(), getColorHeight(),
                                                   getColorWidth() * (int) sizeof(DepthPixel));
+
+    // Create a buffer to store IR images that are transformed into the RGB camera geometry
+    transformed_ir_image_ = k4a::image::create(K4A_IMAGE_FORMAT_CUSTOM16, getColorWidth(), getColorHeight(),
+                                               getColorWidth() * (int) sizeof(uint16_t));
   }
 
   // Publish various transforms needed by ROS.

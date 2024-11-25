@@ -60,7 +60,7 @@ class K4AROSDevice
   k4a_result_t getRbgFrame(const k4a::capture& capture, sensor_msgs::ImagePtr& rgb_frame, bool rectified);
   k4a_result_t getJpegRgbFrame(const k4a::capture& capture, sensor_msgs::CompressedImagePtr& jpeg_image);
 
-  k4a_result_t getIrFrame(const k4a::capture& capture, sensor_msgs::ImagePtr& ir_image);
+  k4a_result_t getIrFrame(const k4a::capture& capture, sensor_msgs::ImagePtr& ir_image, bool rectified);
 
 #if defined(K4A_BODY_TRACKING)
   k4a_result_t getBodyMarker(const k4abt_body_t& body, visualization_msgs::MarkerPtr marker_msg, int jointType,
@@ -131,6 +131,9 @@ class K4AROSDevice
 
   image_transport::Publisher ir_raw_publisher_;
   ros::Publisher ir_raw_camerainfo_publisher_;
+
+  image_transport::Publisher ir_rect_publisher_;
+  ros::Publisher ir_rect_camerainfo_publisher_;
 
   ros::Publisher imu_orientation_publisher_;
 

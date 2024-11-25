@@ -251,6 +251,7 @@ K4AROSDevice::K4AROSDevice(const NodeHandle& n, const NodeHandle& p)
 
   static const std::string depth_raw_topic = "depth/image_raw";
   static const std::string depth_rect_topic = "depth_to_rgb/image_raw";
+  static const std::string ir_rect_topic = "ir_to_rgb/image_raw";
   if (params_.depth_unit == sensor_msgs::image_encodings::TYPE_16UC1) {
     // set lowest PNG compression for maximum FPS
     node_.setParam(node_.resolveName(depth_raw_topic) + "/compressed/format", "png");
@@ -265,11 +266,16 @@ K4AROSDevice::K4AROSDevice(const NodeHandle& n, const NodeHandle& p)
   depth_rect_publisher_ = image_transport_.advertise(depth_rect_topic, 1);
   depth_rect_camerainfo_publisher_ = node_.advertise<CameraInfo>("depth_to_rgb/camera_info", 1);
 
+
   rgb_rect_publisher_ = image_transport_.advertise("rgb_to_depth/image_raw", 1);
   rgb_rect_camerainfo_publisher_ = node_.advertise<CameraInfo>("rgb_to_depth/camera_info", 1);
 
+
   ir_raw_publisher_ = image_transport_.advertise("ir/image_raw", 1);
   ir_raw_camerainfo_publisher_ = node_.advertise<CameraInfo>("ir/camera_info", 1);
+
+  ir_rect_publisher_ = image_transport_.advertise(ir_rect_topic, 1);
+  ir_rect_camerainfo_publisher_ = node_.advertise<CameraInfo>("ir_to_rgb/camera_info", 1);
 
   imu_orientation_publisher_ = node_.advertise<Imu>("imu", 200);
 
@@ -484,14 +490,44 @@ k4a_result_t K4AROSDevice::renderDepthToROS(sensor_msgs::ImagePtr& depth_image, 
   return K4A_RESULT_SUCCEEDED;
 }
 
-k4a_result_t K4AROSDevice::getIrFrame(const k4a::capture& capture, sensor_msgs::ImagePtr& ir_image)
+k4a_result_t K4AROSDevice::getIrFrame(const k4a::capture& capture, sensor_msgs::ImagePtr& ir_image, bool rectified = false)
 {
   k4a::image k4a_ir_frame = capture.get_ir_image();
-
   if (!k4a_ir_frame)
   {
     ROS_ERROR("Cannot render IR frame: no frame");
     return K4A_RESULT_FAILED;
+  }
+
+  if (rectified)
+  {
+    k4a::image k4a_depth_frame = capture.get_depth_image();
+    if (!k4a_depth_frame)
+    {
+      ROS_ERROR("Cannot render IR frame: no depth frame");
+      return K4A_RESULT_FAILED;
+    }
+
+    // Convert the IR16 image to CUSTOM16 format
+    k4a::image ir_custom_image = k4a::image::create(
+        K4A_IMAGE_FORMAT_CUSTOM16,
+        k4a_ir_frame.get_width_pixels(),
+        k4a_ir_frame.get_height_pixels(),
+        k4a_ir_frame.get_width_pixels() * static_cast<int32_t>(sizeof(uint16_t)));
+
+    // Copy the buffer from k4a_ir_frame to ir_custom_image
+    memcpy(ir_custom_image.get_buffer(), k4a_ir_frame.get_buffer(), k4a_ir_frame.get_size());
+
+    // Perform the transformation
+    calibration_data_.k4a_transformation_.depth_image_to_color_camera_custom(
+      k4a_depth_frame,
+      ir_custom_image,
+      &calibration_data_.transformed_depth_image_,
+      &calibration_data_.transformed_ir_image_,
+      K4A_TRANSFORMATION_INTERPOLATION_TYPE_NEAREST,
+      0);
+
+    return renderIrToROS(ir_image, calibration_data_.transformed_ir_image_);
   }
 
   return renderIrToROS(ir_image, k4a_ir_frame);
@@ -885,6 +921,7 @@ void K4AROSDevice::framePublisherThread()
   CameraInfo rgb_rect_camera_info;
   CameraInfo depth_rect_camera_info;
   CameraInfo ir_raw_camera_info;
+  CameraInfo ir_rect_camera_info;
 
   Time capture_time;
 
@@ -974,6 +1011,7 @@ void K4AROSDevice::framePublisherThread()
     ImagePtr depth_raw_frame(new Image);
     ImagePtr depth_rect_frame(new Image);
     ImagePtr ir_raw_frame(new Image);
+    ImagePtr ir_rect_frame(new Image);
     PointCloud2Ptr point_cloud(new PointCloud2);
 
     if (params_.depth_enabled)
@@ -1066,6 +1104,33 @@ void K4AROSDevice::framePublisherThread()
             // Re-synchronize the header timestamps since we cache the camera calibration message
             depth_rect_camera_info.header.stamp = capture_time;
             depth_rect_camerainfo_publisher_.publish(depth_rect_camera_info);
+          }
+        }
+
+        if (params_.color_enabled &&
+            (ir_rect_publisher_.getNumSubscribers() > 0 ||
+             ir_rect_camerainfo_publisher_.getNumSubscribers() > 0) &&
+            (k4a_device_ || capture.get_ir_image() != nullptr))
+        {
+          result = getIrFrame(capture, ir_rect_frame, true /* rectified */);
+
+          if (result != K4A_RESULT_SUCCEEDED)
+          {
+            ROS_ERROR_STREAM("Failed to get rectifed depth frame");
+            ros::shutdown();
+            return;
+          }
+          else if (result == K4A_RESULT_SUCCEEDED)
+          {
+            capture_time = timestampToROS(capture.get_ir_image().get_device_timestamp());
+
+            ir_rect_frame->header.stamp = capture_time;
+            ir_rect_frame->header.frame_id = calibration_data_.tf_prefix_ + calibration_data_.rgb_camera_frame_;
+            ir_rect_publisher_.publish(ir_rect_frame);
+
+            // Re-synchronize the header timestamps since we cache the camera calibration message
+            ir_rect_camera_info.header.stamp = capture_time;
+            ir_rect_camerainfo_publisher_.publish(ir_rect_camera_info);
           }
         }
 
